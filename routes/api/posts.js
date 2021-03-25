@@ -41,4 +41,34 @@ router.post("/", async (req, res, next) => {
     });
 });
 
+router.put("/:id/like", async (req, res, next) => {
+  const postId = req.params.id;
+  const userId = req.session.user._id;
+
+  const isLiked =
+    req.session.user.likes && req.session.user.likes.includes(postId);
+
+  const option = isLiked ? "$pull" : "$addToSet";
+
+  req.session.user = await User.findByIdAndUpdate(
+    userId,
+    { [option]: { likes: postId } },
+    { new: true }
+  ).catch((err) => {
+    console.log(err);
+    res.sendStatus(400);
+  });
+
+  const post = await Post.findByIdAndUpdate(
+    postId,
+    { [option]: { likes: userId } },
+    { new: true }
+  ).catch((err) => {
+    console.log(err);
+    res.sendStatus(400);
+  });
+
+  res.status(200).send(post);
+});
+
 module.exports = router;
